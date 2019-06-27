@@ -1,0 +1,23 @@
+{
+  "name": "backup",
+  "version": "0.0.1",
+  "author": "Riaz Laskar <riazcool77@gmail.com>",
+  "description": "A simple script that backs up files to an S3 bucket",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/riazXrazor/node-backup.git"
+  },
+  "dependencies": {
+    "async": "^3.1.0",
+    "aws-sdk": "^2.483.0",
+    "dotenv": "^8.0.0",
+    "moment": "^2.24.0"
+  },
+  "license": "BSD",
+  "engines": {
+    "node": ">=0.10"
+  }
+}
