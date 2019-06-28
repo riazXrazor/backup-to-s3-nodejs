@@ -1,12 +1,13 @@
 require('dotenv').config()
 const fs = require('fs'),
+	  path = require('path'),
 	  async = require('async'),
 	  moment = require('moment'),
 	  AWS = require('aws-sdk');
 
 
 const PATHS = [
-	"G:\\NODEJS\\node-backup\\tobackup"
+	"/home/cxdev01/Documents/backup-to-s3-nodejs/tobackup"
 ];
 
 AWS.config.update({ accessKeyId: process.env.MY_ACCESS_ID, secretAccessKey: process.env.MY_ACCESS_SECRET_KEY });
@@ -39,17 +40,19 @@ var backupPath = function(sbackupInfo) {
 		let files = fs.readdirSync(backupInfo.path);
 		async.eachSeries(files, function(file, callback) {
 			try {
-				console.log(`File: ${backupInfo.path}\\${file}`);
-				let fileinfo = fs.statSync(`${backupInfo.path}\\${file}`)
-				let filecdate = moment(fileinfo.ctime).format('YYYY-MM-DD');
+				console.log(`File: ${backupInfo.path}${path.sep}${file}`);
+				// let fileinfo = fs.statSync(`${backupInfo.path}${path.sep}${file}`)
+				let createdDate = file.substring(1,9) // date from file name
+				createdDate = moment(createdDate, "YYYYMMDD").format('YYYY-MM-DD');
+				let filecdate = moment(createdDate).format('YYYY-MM-DD');
 				
 				if(moment(filecdate).isBefore(daytocheckfor)){ // if older then three days delete it
-					console.log(`File: ${backupInfo.path}\\${file} older then 3 days delete`);
-					fs.unlinkSync(`${backupInfo.path}\\${file}`);
+					console.log(`File: ${backupInfo.path}${path.sep}${file} older then 3 days delete`);
+					fs.unlinkSync(`${backupInfo.path}${path.sep}${file}`);
 					callback(null)
 				} else {
 					if(moment().diff(filecdate, 'days') === 0){ //if todays file upload to s3
-						backupInfo.fpath = `${backupInfo.path}\\${file}`;
+						backupInfo.fpath = `${backupInfo.path}${path.sep}${file}`;
 						backupInfo.uploadname = file;
 						sendToS3(backupInfo,callback)
 					}
