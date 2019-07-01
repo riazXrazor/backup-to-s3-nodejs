@@ -62,7 +62,7 @@ var backupPath = function(sbackupInfo) {
 				if(moment(filecdate).isBefore(daytocheckfor)){ // if older then three days delete it
 					log.info(`File: ${backupInfo.path}${path.sep}${file} older then ${DELETE_DAYS} days delete`);
 					// log.info("delete");
-					//fs.unlinkSync(`${backupInfo.path}${path.sep}${file}`);
+					fs.unlinkSync(`${backupInfo.path}${path.sep}${file}`);
 					callback(null)
 				} else {
 					if(moment().diff(filecdate, 'days') === 0){ //if todays file upload to s3
