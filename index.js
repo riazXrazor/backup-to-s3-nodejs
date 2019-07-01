@@ -7,7 +7,7 @@ const fs = require('fs'),
 
 
 const PATHS = [
-	"/home/cxdev01/Documents/backup-to-s3-nodejs/tobackup"
+	"/var/www/pa-files/processed-test"
 ];
 
 AWS.config.update({ accessKeyId: process.env.MY_ACCESS_ID, secretAccessKey: process.env.MY_ACCESS_SECRET_KEY });
@@ -41,13 +41,15 @@ var backupPath = function(sbackupInfo) {
 		async.eachSeries(files, function(file, callback) {
 			try {
 				console.log(`File: ${backupInfo.path}${path.sep}${file}`);
-				// let fileinfo = fs.statSync(`${backupInfo.path}${path.sep}${file}`)
+				let fileinfo = fs.statSync(`${backupInfo.path}${path.sep}${file}`)
 				let createdDate = file.substring(1,9) // date from file name
 				createdDate = moment(createdDate, "YYYYMMDD").format('YYYY-MM-DD');
+				//console.log(daytocheckfor,createdDate);
 				let filecdate = moment(createdDate).format('YYYY-MM-DD');
 				
 				if(moment(filecdate).isBefore(daytocheckfor)){ // if older then three days delete it
 					console.log(`File: ${backupInfo.path}${path.sep}${file} older then 3 days delete`);
+					console.log("delete");
 					fs.unlinkSync(`${backupInfo.path}${path.sep}${file}`);
 					callback(null)
 				} else {
@@ -55,7 +57,10 @@ var backupPath = function(sbackupInfo) {
 						backupInfo.fpath = `${backupInfo.path}${path.sep}${file}`;
 						backupInfo.uploadname = file;
 						sendToS3(backupInfo,callback)
+					}else {
+					  callback(null);
 					}
+				  //console.log("send");
 				}
 
 			} catch(exception) {
@@ -74,9 +79,9 @@ var backupPath = function(sbackupInfo) {
 
 
 var sendToS3 = function(backupInfo,callback) {
-	// console.log('Uploading ' + backupInfo.fpath);
-	// console.log(`${backupInfo.uploadname}`)
-	// console.log(backupInfo)
+	 console.log('Uploading ' + backupInfo.fpath);
+	 console.log(`${backupInfo.uploadname}`)
+	 console.log(backupInfo)
 
 	fs.readFile(backupInfo.fpath, function (err, data) {
 		if (err) { throw err; }
