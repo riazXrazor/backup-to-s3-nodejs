@@ -1,0 +1,8 @@
+16:46:03.501 INFO  Beginning backup operations Mon Jul 01 2019 16:46:03 GMT+0530 (India Standard Time) 
+16:46:03.502 INFO  Folder: /home/razor/Documents/backup-to-s3-nodejs/tobackup 
+16:46:03.504 INFO  File: /home/razor/Documents/backup-to-s3-nodejs/tobackup/b20190623wnd18100003.xml 
+16:46:03.506 INFO  File: /home/razor/Documents/backup-to-s3-nodejs/tobackup/b20190623wnd18100003.xml older then 7 days delete 
+16:46:03.506 INFO  File: /home/razor/Documents/backup-to-s3-nodejs/tobackup/b20190701wnd18100002.xml 
+16:46:03.506 INFO  File: /home/razor/Documents/backup-to-s3-nodejs/tobackup/b20190701wnd18100002.xml uploading...  
+16:46:05.161 INFO  File: /home/razor/Documents/backup-to-s3-nodejs/tobackup/b20190701wnd18100002.xml uploaded  
+16:46:05.161 INFO  Backup operation complete 

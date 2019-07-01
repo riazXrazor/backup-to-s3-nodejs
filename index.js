@@ -6,51 +6,63 @@ const fs = require('fs'),
 	  AWS = require('aws-sdk');
 
 
-const PATHS = [
-	"/var/www/pa-files/processed-test"
-];
+const opts = {
+		errorEventName:'error',
+			logDirectory:'logs',
+			fileNamePattern:'<DATE>.log',
+			dateFormat:'YYYY.MM.DD'
+};
+const log = require('simple-node-logger').createRollingFileLogger( opts );
+
+const DELETE_DAYS = process.env.DELETE_DAYS;	  
+const PATHS = [];
+
+PATHS.push(process.env.MY_BACKUP);
 
 AWS.config.update({ accessKeyId: process.env.MY_ACCESS_ID, secretAccessKey: process.env.MY_ACCESS_SECRET_KEY });
 
 
 var backupPaths = function() {
-	console.log('Beginning backup operations');
 	var date = new Date();
+	log.info(`Beginning backup operations ${date}`);
 
 	// Iterate each backup target
 	async.eachSeries(PATHS, function(path, callback) {
 		try {
 			backupPath({path: path, date: date, complete: callback});
 		} catch(exception) {
-			console.log("Unhandled Exception: " + exception);
+			log.warn("Unhandled Exception: " + exception);
 		}
 	}, function(err) { 
-		console.log('Backup operation complete'); 
+		log.info('Backup operation complete'); 
+		 setTimeout(function(){
+			process.exit(0);
+		 },1000)
 	});
 }
 
 var backupPath = function(sbackupInfo) {
 
 	let backupInfo = Object.assign({},sbackupInfo);
-	console.log("Folder: "+backupInfo.path)
+	log.info("Folder: "+backupInfo.path)
 
-	let daytocheckfor = moment().subtract(3, 'days').format('YYYY-MM-DD');
+	let daytocheckfor = moment().subtract(DELETE_DAYS, 'days').format('YYYY-MM-DD');
 	if(fs.statSync(backupInfo.path).isDirectory())
 	{
 		let files = fs.readdirSync(backupInfo.path);
 		async.eachSeries(files, function(file, callback) {
 			try {
-				console.log(`File: ${backupInfo.path}${path.sep}${file}`);
+				log.info(`File: ${backupInfo.path}${path.sep}${file}`);
 				let fileinfo = fs.statSync(`${backupInfo.path}${path.sep}${file}`)
 				let createdDate = file.substring(1,9) // date from file name
 				createdDate = moment(createdDate, "YYYYMMDD").format('YYYY-MM-DD');
-				//console.log(daytocheckfor,createdDate);
+				//log.info(daytocheckfor,createdDate);
 				let filecdate = moment(createdDate).format('YYYY-MM-DD');
 				
 				if(moment(filecdate).isBefore(daytocheckfor)){ // if older then three days delete it
-					console.log(`File: ${backupInfo.path}${path.sep}${file} older then 3 days delete`);
-					console.log("delete");
-					fs.unlinkSync(`${backupInfo.path}${path.sep}${file}`);
+					log.info(`File: ${backupInfo.path}${path.sep}${file} older then ${DELETE_DAYS} days delete`);
+					// log.info("delete");
+					//fs.unlinkSync(`${backupInfo.path}${path.sep}${file}`);
 					callback(null)
 				} else {
 					if(moment().diff(filecdate, 'days') === 0){ //if todays file upload to s3
@@ -60,18 +72,19 @@ var backupPath = function(sbackupInfo) {
 					}else {
 					  callback(null);
 					}
-				  //console.log("send");
+				  //log.info("send");
 				}
 
 			} catch(exception) {
-				console.log("Unhandled Exception: " + exception);
+				log.warn("Unhandled Exception: " + exception);
 			}
 		}, function(err) { 
 			if(err){
-				console.log(err); 
+				log.warn(err); 
 			} else {
 				backupInfo.complete();
 			}
+
 		});
 	}
 
@@ -79,23 +92,27 @@ var backupPath = function(sbackupInfo) {
 
 
 var sendToS3 = function(backupInfo,callback) {
-	 console.log('Uploading ' + backupInfo.fpath);
-	 console.log(`${backupInfo.uploadname}`)
-	 console.log(backupInfo)
+	log.info(`File: ${backupInfo.fpath} uploading... `);
+	//  log.info(`${backupInfo.uploadname}`)
+	//  log.info(backupInfo)
 
 	fs.readFile(backupInfo.fpath, function (err, data) {
 		if (err) { throw err; }
 	  
 		var base64data =  Buffer.from(data, 'binary');
 	    const s3 = new AWS.S3();
-		s3.putObject({
+		s3.upload({
 		  Bucket: process.env.MY_BUCKET_NAME,
 		  Key: backupInfo.uploadname,
 		  Body: base64data,
 		  ACL: 'public-read'
-		},function (resp) {
-		  console.log(resp)
-		  console.log(`File: ${backupInfo.fpath} uploaded `);
+		},function (err,data) {
+			if (err){ 
+				log.warn(`File: ${backupInfo.fpath} not uploaded`);
+				log.warn(err, err.stack);
+			} else {
+		  		log.info(`File: ${backupInfo.fpath} uploaded `);
+			}
 		  callback();
 		});
 	  
