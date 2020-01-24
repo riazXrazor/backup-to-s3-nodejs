@@ -1,4 +1,4 @@
-node-backup
+backup-to-s3-nodejs
 ===========
 
 Simple node.js script to backup files and folders from a computer to an S3 bucket.
